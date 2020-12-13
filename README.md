@@ -9,6 +9,10 @@ $ docker-compose up -d
 $ docker-compose exec shopware bash
 $ composer install
 $ bin/console system:install --create-database --basic-setup
+$ bin/console plugin:refresh
+$ bin/console plugin:install --activate SwagShopwarePwa
+$ bin/console cache:clear
+$ bin/console dal:refresh:index
 $ exit
 ```
 Goto https://shopware.local/admin -> Copy the API access Token from Sales Channel Storefront to data/storefront/shopware-pwa.config.js
