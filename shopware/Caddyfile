@@ -1,0 +1,59 @@
+{
+    debug
+    experimental_http3
+}
+
+(default) {
+    push
+    tls internal
+    encode zstd gzip
+    header {
+        # enable HSTS
+        Strict-Transport-Security max-age=31536000;
+
+        # disable clients from sniffing the media type
+        X-Content-Type-Options nosniff
+        
+        # clickjacking protection
+        X-Frame-Options DENY
+
+        # keep referrer data off of HTTP connections
+        Referrer-Policy no-referrer-when-downgrade
+        X-XSS-Protection 1
+
+        #H3
+        Alt-Svc quic=":443"
+        QUIC-Status $quic
+    }
+}
+
+(redirect) {
+	@http {
+		protocol http
+	}
+	redir @http https://{host}{uri}
+}
+
+{$DOMAIN}:80 {
+    import redirect
+}
+
+{$DOMAIN}:443 {
+    import default
+    @notStatic {
+	    not path /bundles/*
+        not path /admin/*
+        not path /admin
+        not path /admin#/*
+        not path /thumbnail/*
+        not path /store-api/*
+        not path /api/*
+        not path /media/*
+    }
+    reverse_proxy @notStatic http://storefront:3000
+
+    root * /var/www/public
+    php_fastcgi 127.0.0.1:9000
+
+    file_server
+}

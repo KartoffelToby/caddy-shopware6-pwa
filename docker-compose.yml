@@ -1,0 +1,44 @@
+version: '3'
+
+services:
+  shopware:
+    build: shopware
+    hostname: shopware.local
+    links:
+      - mysql:mysql
+      - elasticsearch:elasticsearch
+    volumes:
+      - ./data/shopware:/var/www
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - APP_URL=https://shopware.local
+      - DOMAIN=shopware.local
+      - SHOP=shop.local
+
+  storefront:
+    image: node:lts
+    hostname: storefront
+    links:
+      - shopware:shopware.local
+    ports:
+      - 3000:3000
+    volumes:
+      - ./data/storefront:/data
+    working_dir: /data
+    command: "bash -c 'npm run build && npm start'"
+
+  elasticsearch:
+    image: elastic/elasticsearch:7.1.1
+    environment:
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - discovery.type=single-node
+
+  mysql:
+    image: mysql:8
+    volumes:
+      - /var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: server
+    command: --default-authentication-plugin=mysql_native_password
